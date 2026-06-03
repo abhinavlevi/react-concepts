@@ -1,95 +1,193 @@
 "use client"
-import { useState } from "react"
+import { useState, ChangeEvent } from "react"
+
+// 1. Define explicit types for your state structure
+interface UserState {
+  name: string
+  email: string
+}
+
+interface MutationTracker {
+  key: string
+  value: string
+}
 
 export default function MyForm() {
-  const [count, setCount] = useState(0)
-  const [rawCallsResult, setRawCallsResult] = useState(0)
-  const [functionalCallsResult, setFunctionalCallsResult] = useState(0)
+  // 2. Type the useState hooks
+  const [user, setUser] = useState<UserState>({
+    name: "John Doe",
+    email: "john@example.com"
+  })
+  
+  const [lastMutation, setLastMutation] = useState<MutationTracker>({ 
+    key: "none", 
+    value: "" 
+  })
 
-  function handleInputChange() {
-    // 1. Direct/Raw State Updates (Batched together)
-    // Both read the 'old' count from the current render cycle. 
-    // They essentially do: setCount(0 + 1) and setCount(0 + 1)
-    setCount(count + 1)
-    setCount(count + 1)
+  // 3. Type the React change event explicitly
+  function handleInputChange(e: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target
+    
+    // Core Pattern: Functional update + spreading object + dynamic computed keys
+    setUser(prev => ({
+      ...prev,
+      [name]: value
+    }))
 
-    // 2. Functional State Updates (Queue-based)
-    // These receive the most up-to-date queued value.
-    // prev represents the result of the previous updates in this batch.
-    setCount(prev => prev + 1)
-    setCount(prev => prev + 1)
-
-    // Visual breakdown trackers for the UI demo
-    setRawCallsResult(1) // count + 1 and count + 1 both evaluate to 1
-    setFunctionalCallsResult(prev => prev + 2) 
+    setLastMutation({ key: name, value: value || '""' })
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6 antialiased">
-      <div className="w-full max-w-xl bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
+    <div className="min-h-screen w-full bg-gray-50 text-gray-900 flex flex-col antialiased font-sans">
+      
+      {/* Premium Navigation Header */}
+      <header className="w-full bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-mono font-bold text-sm shadow-sm">
+            O
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-gray-900 tracking-tight">React State Engine</h1>
+            <p className="text-xs text-gray-500 font-medium hidden sm:block">Dynamic Object Mutation Lab (TSX)</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="inline-flex items-center text-xs font-semibold tracking-wide text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
+            Concept: Immutable State
+          </span>
+          <button
+            onClick={() => {
+              setUser({ name: "No Name", email: "No Email" })
+              setLastMutation({ key: "none", value: "" })
+            }}
+            className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-1.5 transition-colors shadow-sm"
+          >
+            Reset Form
+          </button>
+        </div>
+      </header>
+
+      {/* Main Split-Screen Canvas */}
+      <main className="flex-1 w-full grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 bg-white">
         
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <span className="text-xs font-semibold tracking-widest text-emerald-400 uppercase bg-emerald-400/10 px-3 py-1 rounded-full">
-            React Concept Sandbox
-          </span>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            State Batching & Updater Functions
-          </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            See how React handles sequential state updates in a single event handler.
-          </p>
-        </div>
-
-        {/* Main Display Counter */}
-        <div className="relative overflow-hidden bg-slate-900/80 border border-slate-700/30 rounded-xl p-6 text-center shadow-inner mb-6">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Final State Value</p>
-          <div className="mt-2 text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">
-            {count}
-          </div>
-        </div>
-
-        {/* Concept Breakdown Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              <p className="text-xs font-semibold text-slate-400 uppercase">Direct Updates</p>
+        {/* Left Column: The Premium Live Form */}
+        <section className="flex flex-col justify-between p-8 xl:p-12 bg-white min-h-[45vh] lg:min-h-0">
+          <div className="space-y-8 max-w-xl w-full mx-auto lg:mx-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                <h2 className="text-lg font-bold text-gray-900">Account Settings Card</h2>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Updates state securely via a single unified change handler.</p>
             </div>
-            <code className="text-xs text-amber-300 font-mono block mb-2">setCount(count + 1)</code>
-            <p className="text-sm font-medium text-slate-200">Result: +1 total</p>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">Uses stale closure value. Both calls evaluate to 0 + 1.</p>
-          </div>
 
-          <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <p className="text-xs font-semibold text-slate-400 uppercase">Functional Updates</p>
+            {/* Input Form Fields */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Profile Name</label>
+                <input 
+                  name="name" 
+                  value={user.name === "No Name" ? "" : user.name}
+                  onChange={handleInputChange} 
+                  placeholder="Enter full name" 
+                  className="w-full bg-gray-50 text-gray-900 placeholder-gray-400 font-medium text-sm rounded-xl border border-gray-200 px-4 py-3.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all shadow-sm" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
+                <input 
+                  name="email" 
+                  value={user.email === "No Email" ? "" : user.email}
+                  onChange={handleInputChange} 
+                  placeholder="Enter email address" 
+                  className="w-full bg-gray-50 text-gray-900 placeholder-gray-400 font-medium text-sm rounded-xl border border-gray-200 px-4 py-3.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all shadow-sm" 
+                />
+              </div>
             </div>
-            <code className="text-xs text-emerald-300 font-mono block mb-2">setCount(prev =&gt; prev + 1)</code>
-            <p className="text-sm font-medium text-slate-200">Result: +2 total</p>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">Reads the pending state queue sequentially.</p>
+
+            {/* Live Card Preview Box */}
+            <div className="bg-gradient-to-br from-gray-900 to-slate-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute right-6 top-6 h-10 w-10 bg-white/5 rounded-full border border-white/10 flex items-center justify-center text-xs font-bold tracking-tight text-indigo-400">
+                User
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Rendered Output</p>
+                  <h3 className="text-xl font-bold tracking-tight mt-1 truncate">{user.name || <span className="text-gray-600 italic font-normal">Empty</span>}</h3>
+                </div>
+                <div className="pt-2 border-t border-white/10">
+                  <p className="text-sm font-mono text-gray-300 truncate">{user.email || <span className="text-gray-600 italic">empty@domain.com</span>}</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Action Button */}
-        <button
-          onClick={handleInputChange}
-          className="w-full group relative inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium text-slate-900 rounded-xl group bg-gradient-to-br from-emerald-400 to-teal-300 group-hover:from-emerald-400 group-hover:to-teal-300 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-emerald-800 transition-all duration-200 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98]"
-        >
-          <span className="w-full text-center relative px-5 py-4 transition-all ease-in duration-75 bg-slate-900 rounded-xl group-hover:bg-opacity-0 font-semibold tracking-wide">
-            Trigger <code className="font-mono text-emerald-400 group-hover:text-slate-900 transition-colors">handleInputChange()</code>
-          </span>
-        </button>
+          {/* Educational Callout Tag */}
+          <div className="mt-8 max-w-xl w-full mx-auto lg:mx-0 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800 leading-relaxed">
+            💡 <strong>Architecture Tip:</strong> Both form inputs above route directly into a single function. No separate handlers needed per field.
+          </div>
+        </section>
 
-        {/* Explanation Note Footer */}
-        <div className="mt-6 border-t border-slate-700/50 pt-4 text-center">
-          <p className="text-xs text-slate-400">
-            💡 Clicking increases the state by <span className="text-white font-bold">3</span> per click because <span className="font-mono text-slate-300">1 (batched direct) + 2 (functional) = 3</span>.
-          </p>
-        </div>
+        {/* Right Column: Code Breakdown Inspector */}
+        <section className="flex flex-col justify-between p-8 xl:p-12 bg-gray-50/30 min-h-[45vh] lg:min-h-0">
+          <div className="space-y-6 max-w-xl w-full mx-auto lg:mx-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <h2 className="text-lg font-bold text-gray-900">State Compiler & Syntax Engine</h2>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-100">
+                Active Key: {lastMutation.key}
+              </span>
+            </div>
 
-      </div>
+            {/* Live JSON Inspector State representation */}
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-inner">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Current State Tree (JSON)</p>
+              <pre className="text-xs font-mono bg-white border border-gray-200 rounded-lg p-4 text-emerald-700 font-semibold shadow-sm overflow-x-auto">
+{`{
+  name: "${user.name}",
+  email: "${user.email}"
+}`}
+              </pre>
+            </div>
+
+            {/* Code Highlight Box */}
+            <div className="bg-gray-900 rounded-xl p-5 font-mono text-xs text-gray-100 shadow-sm relative overflow-hidden">
+              <div className="absolute right-4 top-4 text-[10px] font-sans text-gray-500">// Dynamic Hook evaluation</div>
+              <p className="text-indigo-400 font-semibold">setUser(<span className="text-gray-300">prev =&gt;</span> &#123;</p>
+              <p className="text-gray-400 pl-4">return &#123;</p>
+              <p className="text-amber-400 pl-8 font-medium">...prev, <span className="text-gray-500">// 1. Copies untouched keys safely</span></p>
+              <p className="text-emerald-400 pl-8 font-bold">[{lastMutation.key}]: "{lastMutation.value}" <span className="text-gray-500">// 2. Dynamic Override</span></p>
+              <p className="text-gray-400 pl-4">&#125;</p>
+              <p className="text-indigo-400 font-semibold">&#125;)</p>
+            </div>
+
+            {/* Explanation Breakdown Cards */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                <h4 className="text-xs font-bold text-gray-900 mb-1">1. Object Spreading (`...prev`)</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  React state updates replace variables entirely rather than merging them. Spreading copies over the unchanged keys so you don't lose them.
+                </p>
+              </div>
+              <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                <h4 className="text-xs font-bold text-gray-900 mb-1">2. Computed Keys (`[name]`)</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  ES6 square bracket syntax dynamically swaps out the object's property identifier at runtime using whatever string is passed by <code className="bg-gray-100 p-0.5 rounded text-gray-950 font-mono">e.target.name</code>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center text-xs font-medium text-gray-400 border-t border-gray-200/60 pt-4">
+            Type anything into the form inputs to watch the compiler compute state assignments in real-time.
+          </div>
+        </section>
+
+      </main>
     </div>
   )
 }
