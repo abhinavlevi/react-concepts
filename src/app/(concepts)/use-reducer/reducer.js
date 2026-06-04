@@ -1,17 +1,33 @@
 export default function reducer(state, action) {
-    switch (action.type) {
-        case 'INCREMENT':
-            return state + action.payload
+  switch (action.type) {
+    case "ADD":
+      return {
+        ...state,
+        todos: [
+          ...state.todos,
+          {
+            id: Date.now(),
+            text: action.payload,
+            completed: false,
+          },
+        ],
+      };
 
-        case 'DECREMENT':
-            return state - action.payload
+    case "DELETE":
+      return {
+        ...state,
+        todos: state.todos.filter(
+          todo => todo.id !== action.payload
+        ),
+      };
 
-        case 'RESET':
-            return 0
+    case "CLEAR":
+      return {
+        ...state,
+        todos: [],
+      };
 
-        default:
-            return state
-
-    }
-
+    default:
+      return state;
+  }
 }
